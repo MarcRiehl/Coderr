@@ -58,8 +58,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'coderr_app.apps.CoderrAppConfig',
     'auth_app.apps.AuthAppConfig',
+    'profiles_app.apps.ProfilesAppConfig',
+    'offers_app.apps.OffersAppConfig',
+    'orders_app.apps.OrdersAppConfig',
+    'reviews_app.apps.ReviewsAppConfig',
     'corsheaders',
 ]
 
