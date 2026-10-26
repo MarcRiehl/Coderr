@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'offers_app.apps.OffersAppConfig',
     'orders_app.apps.OrdersAppConfig',
     'reviews_app.apps.ReviewsAppConfig',
+    'info_app.apps.InfoAppConfig',
     'corsheaders',
 ]
 
