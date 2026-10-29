@@ -5,7 +5,7 @@ from django.db import models
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
 
-    file = models.ImageField(upload_to="", blank=True, null=True)
+    file = models.CharField(max_length=255, blank=True,null=True)
 
     location = models.CharField(max_length=255, blank=True, default="")
 

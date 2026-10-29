@@ -24,12 +24,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "working_hours",
             "type",
             "email",
-            "uploaded_at",
             "created_at",
         ]
         read_only_fields = [
             "user",
             "username",
             "type",
+            "uploaded_at",
             "created_at",
         ]

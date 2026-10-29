@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from profiles_app.models import Profile
+
 
 User = get_user_model()
 
@@ -42,6 +44,8 @@ class RegistrationTests(APITestCase):
         self.assertEqual(response.data["email"], "user@localhost.de")
 
         self.assertIn("user_id", response.data)
+
+        self.assertTrue(Profile.objects.filter(user_id=response.data["user_id"]).exists()) #Ob das Profil existiert
 
 
     def test_registration_passwords_do_not_match(self): #wenn Passwort nicht passt

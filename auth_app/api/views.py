@@ -1,11 +1,14 @@
 
+from django.db import transaction
+
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 
 from .serializers import RegistrationSerializer, LoginSerializer
+from profiles_app.models import Profile
 
 
 class LoginView(APIView):
@@ -36,8 +39,6 @@ class LoginView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
-
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
 
@@ -45,11 +46,14 @@ class RegistrationView(APIView):
         serializer = RegistrationSerializer(data=request.data)
 
         if serializer.is_valid():
-            saved_account = serializer.save()
+            with transaction.atomic(): #Datenbankoperationen = gemeinsame Transaktion, bei Fehler keine unvollständigen Daten
+                saved_account = serializer.save()
 
-            token, created = Token.objects.get_or_create(
-                user=saved_account
-            )
+                Profile.objects.create(user=saved_account) # Neues Profil anlegen
+
+                token, created = Token.objects.get_or_create(
+                    user=saved_account
+                )
 
             data = {
                 "token": token.key,
@@ -60,7 +64,4 @@ class RegistrationView(APIView):
 
             return Response(data, status=status.HTTP_201_CREATED)
 
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

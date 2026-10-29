@@ -1,21 +1,83 @@
 from rest_framework.views import APIView
-from rest_framework import generics, mixins, status
-from rest_framework.viewsets import ModelViewSet
+
+
+
+from django.utils import timezone
+
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import (MultiPartParser, FormParser, JSONParser)
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from ..models import Profile
 from .serializers import ProfileSerializer
 
+
 class ProfileViewSet(ModelViewSet):
-    http_method_names = ['get', 'patch']
+    http_method_names = ["get", "patch"]
 
     serializer_class = ProfileSerializer
-
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
-    def get_permissions(self):
-        pass
+    def get_queryset(self):
+        return Profile.objects.select_related("user").all()
 
-    def get_serializer_class(self):
-        pass
+    def get_object(self):
+        profile = Profile.objects.filter(
+            user_id=self.kwargs["pk"]
+        ).first()
+    
+        if profile is None:
+            from django.http import Http404
+            raise Http404
+    
+        self.check_object_permissions(self.request, profile)
+        return profile
+
+    def partial_update(self, request, *args, **kwargs):
+        profile = self.get_object()
+
+       
+        if profile.user_id != request.user.id:  # Nur der Eigentümer darf das Profil bearbeiten
+            raise PermissionDenied(
+                "You can only update your own profile."
+            )
+
+        data = request.data.copy()
+
+        
+        user_fields = ["first_name", "last_name", "email"] # User-Felder vom Profil trennen
+        user_data = {
+            field: data.pop(field)
+            for field in user_fields
+            if field in data
+        }
+
+        serializer = self.get_serializer(profile, data=data,partial=True) # Profil validieren und aktualisieren
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        
+        user = profile.user #  User aktualisieren.
+
+        for field, value in user_data.items():
+            setattr(user, field, value)
+
+        if user_data:
+            user.save(update_fields=list(user_data.keys()))
+
+        
+        if "file" in request.FILES: # Upload-Zeitpunkt nur bei neuer Datei aktualisieren.
+            profile.uploaded_at = timezone.now()
+            profile.save(update_fields=["uploaded_at"])
+
+        return Response(self.get_serializer(profile).data,status=status.HTTP_200_OK)
+
+
+
 
 
 
