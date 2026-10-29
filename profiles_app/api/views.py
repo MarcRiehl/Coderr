@@ -10,9 +10,10 @@ from rest_framework.parsers import (MultiPartParser, FormParser, JSONParser)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import ListAPIView
 
 from ..models import Profile
-from .serializers import ProfileSerializer
+from .serializers import ProfileSerializer, ProfilesBusinessSerializer, ProfilesCustomerSerializer
 
 
 class ProfileViewSet(ModelViewSet):
@@ -29,11 +30,11 @@ class ProfileViewSet(ModelViewSet):
         profile = Profile.objects.filter(
             user_id=self.kwargs["pk"]
         ).first()
-    
+
         if profile is None:
             from django.http import Http404
             raise Http404
-    
+
         self.check_object_permissions(self.request, profile)
         return profile
 
@@ -76,14 +77,16 @@ class ProfileViewSet(ModelViewSet):
 
         return Response(self.get_serializer(profile).data,status=status.HTTP_200_OK)
 
+class ProfilesBusinessView(ListAPIView):
+    serializer_class = ProfilesBusinessSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return Profile.objects.filter(user__type="business").select_related("user") #.order_by('username')
 
+class ProfilesCustomerView(ListAPIView):
+    serializer_class = ProfilesCustomerSerializer
+    permission_classes = [IsAuthenticated]
 
-
-
-
-class ProfileBusinessViewSet(APIView):
-    pass
-
-class ProfileCustomerViewSet(APIView):
-    pass
+    def get_queryset(self):
+        return Profile.objects.filter(user__type="customer").select_related("user") #.order_by('username')

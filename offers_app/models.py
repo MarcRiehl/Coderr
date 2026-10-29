@@ -5,7 +5,7 @@ from django.conf import settings
 class Offer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="offers") # muss business besitzen
     title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to="", null=True, blank=True) #uploadpfad noch prüfen, null erlauben
+    image = models.CharField(max_length=255, blank=True,null=True) #uploadpfad noch prüfen, null erlauben
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 

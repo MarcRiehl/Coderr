@@ -33,3 +33,56 @@ class ProfileSerializer(serializers.ModelSerializer):
             "uploaded_at",
             "created_at",
         ]
+
+class ProfilesBusinessSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", required=False)
+    last_name = serializers.CharField(source="user.last_name", required=False)
+    type = serializers.CharField(source="user.type", read_only=True)
+
+    class Meta:
+        model = Profile
+
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "location",
+            "tel",
+            "description",
+            "working_hours",
+            "type",
+        ]
+        read_only_fields = [
+            "user",
+            "username",
+            "type"
+        ]
+
+
+class ProfilesCustomerSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", required=False)
+    last_name = serializers.CharField(source="user.last_name", required=False)
+    type = serializers.CharField(source="user.type", read_only=True)
+
+    class Meta:
+        model = Profile
+
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "uploaded_at",
+            "type",
+        ]
+        read_only_fields = [
+            "user",
+            "username",
+            "uploaded_at",
+            "type"
+        ]
