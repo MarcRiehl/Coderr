@@ -15,6 +15,8 @@ class Profile(models.Model):
 
     working_hours = models.CharField(max_length=100, blank=True, default="")
 
+    uploaded_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
