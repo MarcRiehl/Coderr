@@ -1,19 +1,15 @@
-from rest_framework.views import APIView
-
-
-
 from django.utils import timezone
-
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.parsers import (MultiPartParser, FormParser, JSONParser)
+from rest_framework.generics import ListAPIView
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import ListAPIView
 
 from ..models import Profile
-from .serializers import ProfileSerializer, ProfilesBusinessSerializer, ProfilesCustomerSerializer
+from .serializers import (ProfilesBusinessSerializer,
+                          ProfilesCustomerSerializer, ProfileSerializer)
 
 
 class ProfileViewSet(ModelViewSet):
@@ -61,7 +57,6 @@ class ProfileViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        
         user = profile.user #  User aktualisieren.
 
         for field, value in user_data.items():
@@ -70,7 +65,6 @@ class ProfileViewSet(ModelViewSet):
         if user_data:
             user.save(update_fields=list(user_data.keys()))
 
-        
         if "file" in request.FILES: # Upload-Zeitpunkt nur bei neuer Datei aktualisieren.
             profile.uploaded_at = timezone.now()
             profile.save(update_fields=["uploaded_at"])
