@@ -3,7 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsBusinessUser
+from .permissions import IsBusinessUser, IsOfferOwner
 
 from ..models import Offer
 from .serializers import OfferSerializer, OfferListSerializer
@@ -19,12 +19,22 @@ class OfferViewSet(ModelViewSet):
     def get_permissions(self):
         if self.action == "list":
             return [AllowAny()]
-    
+
         if self.action == "retrieve":
             return [IsAuthenticated()]
-    
-        return [IsAuthenticated(), IsBusinessUser()]
 
+        if self.action == "create":
+            return [IsAuthenticated(), IsBusinessUser()]
+
+        if self.action in ["partial_update", "destroy"]:
+            return [
+                IsAuthenticated(),
+                IsBusinessUser(),
+                IsOfferOwner()
+            ]
+
+        return [IsAuthenticated()]
+    
     def get_serializer_class(self):
         if self.action == "list":
             return OfferListSerializer
@@ -43,8 +53,8 @@ class OfferViewSet(ModelViewSet):
         return queryset
     
     def perform_create(self, serializer):
-        pass
-
+        serializer.save(user=self.request.user)
+        
     def partial_update(self, request, *args, **kwargs):
         pass
 
