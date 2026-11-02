@@ -29,5 +29,13 @@ class OfferDetail(models.Model):
     features = models.JSONField(default=list)
     offer_type = models.CharField(max_length=20, choices=OfferType.choices)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["offer", "offer_type"],
+                name="unique_offer_detail_type"
+            )
+        ] #UniqueConstrain verhindert doppelte Pakettypen innerhalb desselben Angebots
+
     def __str__(self):
         return f"{self.offer.title} - {self.get_offer_type_display()}"
