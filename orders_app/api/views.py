@@ -5,15 +5,17 @@ from rest_framework.response import Response
 
 
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from .permissions import IsCustomer, IsBusinessOrderOwner
-from .serializers import OrderSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer
+from .serializers import OrderSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer, OrderCountSerializer
 from ..models import Order
 
-
+User = get_user_model()
 
 class OrderViewSet(viewsets.ModelViewSet):
 
@@ -94,7 +96,27 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 class OrderCountView(APIView):
-    pass
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+
+        business_user = get_object_or_404(User, id=business_user_id, type='business')
+
+        order_count = Order.objects.filter(business_user=business_user, status=Order.OrderStatus.IN_PROGRESS).count()
+
+        serializer = OrderCountSerializer({'order_count': order_count})
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CompletedOrderCountView(APIView):
-    pass
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+
+        business_user = get_object_or_404(User, id=business_user_id, type='business')
+
+        completed_order_count = Order.objects.filter(business_user=business_user, status=Order.OrderStatus.COMPLETED).count()
+
+        serializer = OrderCountSerializer({'completed_order_count': completed_order_count})
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

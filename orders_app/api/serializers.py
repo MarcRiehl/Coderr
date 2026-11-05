@@ -69,3 +69,7 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['status']
+
+class OrderCountSerializer(serializers.Serializer):
+    order_count = serializers.IntegerField(required=False)
+    completed_order_count = serializers.IntegerField(required=False)
