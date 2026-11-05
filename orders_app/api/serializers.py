@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from ..models import Order
 from offers_app.models import OfferDetail
+from django.db import transaction
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -45,6 +46,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['offer_detail_id']
 
+    @transaction.atomic
     def create(self, validated_data):
         offer_detail = validated_data['offer_detail']
         customer = self.context['request'].user
