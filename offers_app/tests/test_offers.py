@@ -14,6 +14,7 @@ from offers_app.models import Offer, OfferDetail
 User = get_user_model()
 
 
+
 class OfferTests(APITestCase):
 
     def setUp(self):
@@ -181,6 +182,47 @@ class OfferTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
 
+    def test_filter_and_search_combined(self):
+        response = self.client.get(
+            self.offers_url,
+            {
+                "creator_id": self.business_user.id,
+                "search": "Design",
+                "min_price": "50"
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_invalid_creator_id_returns_400(self):
+        response = self.client.get(self.offers_url,{"creator_id": "invalid"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_min_price_returns_400(self):
+        response = self.client.get(self.offers_url, {"min_price": "invalid"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_max_delivery_time_returns_400(self):
+        response = self.client.get(
+            self.offers_url,
+            {"max_delivery_time": "invalid"}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_ordering_returns_400(self):
+        response = self.client.get(self.offers_url, {"ordering": "invalid_field"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_page_size_returns_400(self):
+        response = self.client.get(self.offers_url,{"page_size": "invalid"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_order_offers_by_min_price(self):
         self.create_offer(
             self.business_user,
@@ -190,11 +232,7 @@ class OfferTests(APITestCase):
             premium_price=150
         )
 
-        response = self.client.get(
-            self.offers_url,
-            {"ordering": "min_price"}
-        )
-
+        response = self.client.get(self.offers_url,{"ordering": "min_price"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         results = response.data["results"]
