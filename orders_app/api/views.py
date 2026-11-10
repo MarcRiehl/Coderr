@@ -21,7 +21,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'post', 'patch']
 
 
     def get_permissions(self):
@@ -53,14 +53,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        if self.action == 'destroy' and user.is_staff:
-            return Order.objects.select_related(
-            'customer_user',
-            'business_user',
-            'offer_detail',
-            'offer_detail__offer'
-        ) #select_related() um zusammengehörige Daten bereits mit einer Datenbankabfrage abzurufen
-
         return Order.objects.filter(Q(customer_user=user) | Q(business_user=user)).select_related(
             'customer_user',
             'business_user',
@@ -88,12 +80,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         response_serializer = OrderSerializer(order, context=self.get_serializer_context())
 
         return Response(response_serializer.data)
-
-    def destroy(self, request, *args, **kwargs):
-        order = self.get_object()
-        order.delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
     
 class OrderCountView(APIView):
     permission_classes = [IsAuthenticated]

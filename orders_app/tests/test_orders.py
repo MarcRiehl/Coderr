@@ -223,35 +223,6 @@ class OrderTests(APITestCase):
         response = self.client.patch(self.order_detail_url, {'status': Order.OrderStatus.COMPLETED}, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    #Tests DELETE order id
-    def test_delete_order_as_admin_success(self):
-        self.client.force_authenticate(user=self.admin)
-
-        response = self.client.delete(self.order_detail_url)
-
-        self.assertEqual(response.status_code,status.HTTP_204_NO_CONTENT)
-
-        self.assertFalse(Order.objects.filter(pk=self.order.pk).exists())
-
-    def test_delete_order_as_customer_forbidden(self):
-        self.client.force_authenticate(user=self.customer)
-
-        response = self.client.delete(self.order_detail_url)
-
-        self.assertEqual(response.status_code,status.HTTP_403_FORBIDDEN)
-
-    def test_delete_order_as_business_forbidden(self):
-        self.client.force_authenticate(user=self.business)
-
-        response = self.client.delete(self.order_detail_url)
-
-        self.assertEqual(response.status_code,status.HTTP_403_FORBIDDEN)
-
-    def test_delete_order_unauthenticated(self):
-        response = self.client.delete(self.order_detail_url)
-
-        self.assertEqual(response.status_code,status.HTTP_401_UNAUTHORIZED)
-
     #Test GET order-count {business_user_id}
     def test_get_order_count_success(self):
         self.client.force_authenticate(user=self.customer)
