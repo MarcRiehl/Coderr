@@ -52,13 +52,25 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-
-        return Order.objects.filter(Q(customer_user=user) | Q(business_user=user)).select_related(
+    
+        if self.action == 'partial_update':
+            return Order.objects.select_related(
+                'customer_user',
+                'business_user',
+                'offer_detail',
+                'offer_detail__offer'
+            )
+    
+        return Order.objects.filter(
+            Q(customer_user=user) | Q(business_user=user)
+        ).select_related(
             'customer_user',
             'business_user',
             'offer_detail',
             'offer_detail__offer'
-        ).order_by('-created_at') #select_related Angebote effizienter laden
+        ).order_by('-created_at')
+        
+        #select_related Angebote effizienter laden
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

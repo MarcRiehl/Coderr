@@ -77,6 +77,21 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['status']
 
+    def to_internal_value(self, data):
+        allowed_fields = set(self.fields.keys())
+        received_fields = set(data.keys())
+
+        forbidden_fields = received_fields - allowed_fields
+
+        if forbidden_fields:
+            raise serializers.ValidationError({
+                field: "Dieses Feld darf nicht geändert werden."
+                for field in forbidden_fields
+            })
+
+        return super().to_internal_value(data)
+    
+
 class OrderCountSerializer(serializers.Serializer):
     order_count = serializers.IntegerField(required=False)
     completed_order_count = serializers.IntegerField(required=False)
