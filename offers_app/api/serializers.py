@@ -64,7 +64,8 @@ class OfferDetailSerializer(serializers.ModelSerializer):
     price = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
-        coerce_to_string=False
+        coerce_to_string=False,
+        min_value=0
     )
 
     class Meta:
