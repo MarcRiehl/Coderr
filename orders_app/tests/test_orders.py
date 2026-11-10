@@ -182,7 +182,7 @@ class OrderTests(APITestCase):
 
         response = self.client.post(self.order_list_url, {'offer_detail_id': 9999}, format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_order_unauthenticated(self):
         response = self.client.post(self.order_list_url, {'offer_detail_id': self.offer_detail.id},format='json')

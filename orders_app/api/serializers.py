@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import Order
 from offers_app.models import OfferDetail
 from django.db import transaction
+from rest_framework.exceptions import NotFound
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -33,22 +34,28 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderCreateSerializer(serializers.ModelSerializer):
 
-    offer_detail_id = serializers.PrimaryKeyRelatedField(
-        source='offer_detail',
-        queryset=OfferDetail.objects.select_related(
-            'offer',
-            'offer__user'
-        ),
-        write_only=True
-    )
+    offer_detail_id = serializers.IntegerField(write_only=True) # prüfung gültige Ganzzahl übergeben
 
     class Meta:
         model = Order
         fields = ['offer_detail_id']
 
+    
+    def validate_offer_detail_id(self, value):
+        try:
+            return OfferDetail.objects.select_related(
+                'offer',
+                'offer__user'
+            ).get(id=value)
+
+        except OfferDetail.DoesNotExist:
+            raise NotFound(
+                "Das angegebene Angebotsdetail wurde nicht gefunden."
+            )
+
     @transaction.atomic
     def create(self, validated_data):
-        offer_detail = validated_data['offer_detail']
+        offer_detail = validated_data['offer_detail_id']
         customer = self.context['request'].user
         business = offer_detail.offer.user
 
@@ -63,7 +70,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             features=offer_detail.features,
             offer_type=offer_detail.offer_type
         )
-
+    
 class OrderStatusUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
