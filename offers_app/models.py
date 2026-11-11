@@ -5,7 +5,7 @@ from django.conf import settings
 class Offer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="offers") # muss business besitzen
     title = models.CharField(max_length=255)
-    image = models.CharField(max_length=255, blank=True,null=True) #uploadpfad noch prüfen, null erlauben
+    image = models.CharField(max_length=255, blank=True, null=True) #uploadpfad noch prüfen, null erlauben
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -23,7 +23,7 @@ class OfferDetail(models.Model):
 
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="details")
     title = models.CharField(max_length=255)
-    revisions = models.PositiveIntegerField()
+    revisions = models.PositiveIntegerField(blank=True, null=True)
     delivery_time_in_days = models.PositiveIntegerField() #nur positive Zahlen
     price = models.DecimalField(max_digits=10, decimal_places=2)
     features = models.JSONField(default=list)

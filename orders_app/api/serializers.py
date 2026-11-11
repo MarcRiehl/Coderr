@@ -5,6 +5,29 @@ from django.db import transaction
 from rest_framework.exceptions import NotFound
 
 
+class RevisionsField(serializers.IntegerField):
+
+    def get_attribute(self, instance):
+        value = super().get_attribute(instance)
+
+        return -1 if value is None else value
+
+    def to_internal_value(self, data):
+        if data == -1 or data == "-1":
+            return None
+
+        value = super().to_internal_value(data)
+
+        if value < 0:
+            raise serializers.ValidationError(
+                "Ensure this value is greater than or equal to 0."
+            )
+
+        return value
+
+    def to_representation(self, value):
+        return int(value)
+        
 class OrderSerializer(serializers.ModelSerializer):
 
     price = serializers.DecimalField(
@@ -12,6 +35,11 @@ class OrderSerializer(serializers.ModelSerializer):
         decimal_places=2,
         coerce_to_string=False
     )
+
+    revisions = RevisionsField(
+    required=False,
+    allow_null=True
+)
 
     class Meta:
         model = Order

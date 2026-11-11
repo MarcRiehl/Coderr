@@ -16,7 +16,7 @@ class Order(models.Model):
     offer_detail = models.ForeignKey(OfferDetail, on_delete=models.PROTECT, related_name="orders") #Aus dem Offerdetail übernehmen, damit nicht doppelt
 
     title = models.CharField(max_length=255)
-    revisions = models.PositiveIntegerField()
+    revisions = models.PositiveIntegerField(null=True,blank=True)
     delivery_time_in_days = models.PositiveIntegerField() #nur positive Zahlen
     price = models.DecimalField(max_digits=10, decimal_places=2)
     features = models.JSONField(default=list)
