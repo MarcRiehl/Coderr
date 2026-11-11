@@ -18,7 +18,7 @@ class BaseInfoView(APIView):
 
         average_rating = Review.objects.aggregate(average=Avg('rating'))['average'] #Durchschnitt direkt in der Datenbank
 
-        business_profile_count = Profile.objects.filter(type='business').count()
+        business_profile_count = Profile.objects.filter(user__type='business').count() #user__type__ aus dem user model
 
         offer_count = Offer.objects.count()
 
