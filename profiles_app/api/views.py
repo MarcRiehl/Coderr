@@ -46,9 +46,10 @@ class ProfileViewSet(ModelViewSet):
         data = request.data.copy()
 
         
-        user_fields = ["first_name", "last_name", "email"] # User-Felder vom Profil trennen
+        user_fields = ["first_name", "last_name", "email"] # User-Felder vom Profil trennen, alte Version erzeugte Fehler ['Testbsp'] = QueryDict
+        
         user_data = {
-            field: data.pop(field)
+            field: data.get(field)
             for field in user_fields
             if field in data
         }
