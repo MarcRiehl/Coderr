@@ -2,10 +2,14 @@ from django.conf import settings
 from django.db import models
 
 
+def profile_image_upload_path(instance, filename):
+    return f"profile_images/{instance.user.id}/{filename}"
+
+
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
 
-    file = models.CharField(max_length=255, blank=True,null=True)
+    file = models.FileField(upload_to=profile_image_upload_path, blank=True, null=True)
 
     location = models.CharField(max_length=255, blank=True, default="")
 

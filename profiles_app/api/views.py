@@ -6,10 +6,13 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from django.conf import settings
+from django.http import FileResponse, Http404
+from django.views import View
+import os
 
 from ..models import Profile
-from .serializers import (ProfilesBusinessSerializer,
-                          ProfilesCustomerSerializer, ProfileSerializer)
+from .serializers import (ProfilesBusinessSerializer, ProfilesCustomerSerializer, ProfileSerializer)
 
 
 class ProfileViewSet(ModelViewSet):
@@ -85,3 +88,18 @@ class ProfilesCustomerView(ListAPIView):
 
     def get_queryset(self):
         return Profile.objects.filter(user__type="customer").select_related("user") #.order_by('username')
+
+class ProfileImageView(View):
+
+    def get(self, request, filename):
+        for root, dirs, files in os.walk(
+            settings.MEDIA_ROOT / "profile_images"
+        ):
+            if filename in files:
+                file_path = os.path.join(root, filename)
+
+                return FileResponse(
+                    open(file_path, "rb")
+                )
+
+        raise Http404("Profile image not found")

@@ -6,11 +6,17 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from profiles_app.models import Profile
+import tempfile
 
+from django.test import override_settings
 User = get_user_model()
 
+@override_settings(
+    MEDIA_ROOT=tempfile.mkdtemp()
+)
 
 class ProfileTests(APITestCase):
 
@@ -78,11 +84,17 @@ class ProfileTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_patch_profile(self):
+        image = SimpleUploadedFile(
+            name="miri-picture.jpg",
+            content=b"fake image content",
+            content_type="image/jpeg"
+        )
+
         payload = {
             "first_name": "Miri",
             "last_name": "Musterfrau",
             "email": "miri@localhost.de",
-            "file": "miri-picture.jpg",
+            "file": image,
             "location": "Hamburg",
             "tel": "987654321",
             "description": "Updated business description",
@@ -92,23 +104,32 @@ class ProfileTests(APITestCase):
         response = self.client.patch(
             self.profile_url,
             data=payload,
-            format="json",
+            format="multipart",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK,)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.data
+        )
 
-        self.user.refresh_from_db()
         self.profile.refresh_from_db()
 
-        self.assertEqual(self.user.first_name, "Miri")
-        self.assertEqual(self.user.last_name, "Musterfrau")
-        self.assertEqual(self.user.email, "miri@localhost.de")
-
-        self.assertEqual(self.profile.file, "miri-picture.jpg")
+        self.assertEqual(self.profile.user.first_name, "Miri")
+        self.assertEqual(self.profile.user.last_name, "Musterfrau")
+        self.assertEqual(self.profile.user.email, "miri@localhost.de")
         self.assertEqual(self.profile.location, "Hamburg")
         self.assertEqual(self.profile.tel, "987654321")
-        self.assertEqual(self.profile.description,"Updated business description")
+        self.assertEqual(
+            self.profile.description,
+            "Updated business description"
+        )
         self.assertEqual(self.profile.working_hours, "10-18")
+
+        self.assertEqual(
+            response.data["file"],
+            "miri-picture.jpg"
+        )
 
     def test_patch_foreign_profile_forbidden(self):
         other_user = User.objects.create_user(

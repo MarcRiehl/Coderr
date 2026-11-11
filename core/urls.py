@@ -16,6 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.static import serve
+from profiles_app.api.views import ProfileImageView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +29,9 @@ urlpatterns = [
     path('api/', include('offers_app.api.urls')),
     path('api/', include('orders_app.api.urls')),
     path('api/', include('reviews_app.api.urls')),
+     path("<str:filename>", ProfileImageView.as_view(), name="profile-image"),
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
