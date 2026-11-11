@@ -210,7 +210,7 @@ class OrderTests(APITestCase):
         self.client.force_authenticate(user=self.business2)
 
         response = self.client.patch(self.order_detail_url, {'status': Order.OrderStatus.COMPLETED}, format='json')
-        self.assertEqual(response.status_code,status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code,status.HTTP_403_FORBIDDEN) #Anpassung an Model
 
     def test_update_order_with_invalid_status(self):
         self.client.force_authenticate(user=self.business)

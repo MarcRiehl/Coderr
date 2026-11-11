@@ -316,6 +316,49 @@ class ReviewAPITest(APITestCase):
         response = self.client.patch(self.detail_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_update_review_reviewer_not_allowed(self): #Reviewer kann nicht geändert werden
+        self.client.force_authenticate(user=self.customer)
+    
+        original_reviewer = self.review.reviewer_id
+    
+        data = {
+            'reviewer': self.customer2.id,
+            'rating': 5
+        }
+    
+        response = self.client.patch(self.detail_url, data,format='json')
+    
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+        self.review.refresh_from_db()
+    
+        self.assertEqual(self.review.reviewer_id, original_reviewer)
+        self.assertEqual(self.review.rating, 5)
+
+    def test_update_review_readonly_fields_not_allowed(self):
+        self.client.force_authenticate(user=self.customer)
+
+        original_created_at = self.review.created_at
+        original_updated_at = self.review.updated_at
+
+        data = {
+            'created_at': '2020-01-01T10:00:00Z',
+            'updated_at': '2020-01-01T10:00:00Z',
+            'rating': 5
+        }
+
+        response = self.client.patch(self.detail_url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.review.refresh_from_db()
+
+        self.assertEqual(self.review.created_at, original_created_at)
+
+        self.assertGreater(self.review.updated_at, original_updated_at)
+
+        self.assertEqual(self.review.rating, 5)
+
     #Tests DELETE
     def test_delete_review_success(self):
         self.client.force_authenticate(user=self.customer)
