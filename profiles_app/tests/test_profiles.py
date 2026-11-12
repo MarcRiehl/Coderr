@@ -1,23 +1,21 @@
-#python manage.py test profiles_app.tests.test_profiles
-
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-
-from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.test import APITestCase, APIClient
-from django.core.files.uploadedfile import SimpleUploadedFile
-
-from profiles_app.models import Profile
 import tempfile
 
+from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient, APITestCase
+
+from profiles_app.models import Profile
+
 User = get_user_model()
+
 
 @override_settings(
     MEDIA_ROOT=tempfile.mkdtemp()
 )
-
 class ProfileTests(APITestCase):
 
     def setUp(self):
@@ -44,11 +42,18 @@ class ProfileTests(APITestCase):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token.key)
 
-        self.profile_url = reverse("profile-detail", kwargs={"pk": self.user.pk},)
+        self.profile_url = reverse(
+            "profile-detail", kwargs={"pk": self.user.pk},)
 
         self.business_url = reverse("profiles-business")
 
+    def authenticate(self, token):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Token {token.key}"
+        )
+
     def test_get_profile(self):
+        """A profile returns all profile and user fields with status 200."""
         response = self.client.get(self.profile_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -65,6 +70,7 @@ class ProfileTests(APITestCase):
         self.assertEqual(response.data["type"], "business")
 
     def test_get_profile_unauthenticated(self):
+        """Retrieving a profile without authentication returns 401."""
         client = APIClient()
 
         response = client.get(self.profile_url)
@@ -72,6 +78,7 @@ class ProfileTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED,)
 
     def test_get_profile_not_found(self):
+        """Retrieving the profile of a user without a profile returns 404."""
         user_without_profile = User.objects.create_user(
             username="no_profile",
             password="testpassword"
@@ -83,7 +90,20 @@ class ProfileTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_get_profile_without_image(self):
+        """A profile without an image returns null for file."""
+        self.profile.file = None
+        self.profile.save()
+
+        self.authenticate(self.token)
+
+        response = self.client.get(self.profile_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["file"])
+
     def test_patch_profile(self):
+        """The owner can update profile fields, user fields and the image."""
         image = SimpleUploadedFile(
             name="miri-picture.jpg",
             content=b"fake image content",
@@ -132,6 +152,7 @@ class ProfileTests(APITestCase):
         )
 
     def test_patch_foreign_profile_forbidden(self):
+        """Updating another user's profile returns 403."""
         other_user = User.objects.create_user(
             username="otheruser",
             password="testpassword"
@@ -141,11 +162,13 @@ class ProfileTests(APITestCase):
 
         url = reverse("profile-detail", kwargs={"pk": other_user.pk})
 
-        response = self.client.patch(url, data={"location": "Koblenz"}, format="json")
+        response = self.client.patch(
+            url, data={"location": "Koblenz"}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_patch_profile_not_found(self):
+        """Updating the profile of a user without a profile returns 404."""
         user_without_profile = User.objects.create_user(
             username="missingprofile",
             password="testpassword"
@@ -161,7 +184,40 @@ class ProfileTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_patch_profile_without_image(self):
+        """A profile without an image can be updated and file stays null."""
+        self.profile.file = None
+        self.profile.save()
+
+        self.authenticate(self.token)
+
+        payload = {
+            "first_name": "Miri Updated",
+            "last_name": "Musterfrau Updated"
+        }
+
+        response = self.client.patch(
+            self.profile_url,
+            data=payload,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            response.data
+        )
+
+        self.assertIsNone(response.data["file"])
+
+        self.profile.refresh_from_db()
+
+        self.assertFalse(self.profile.file)
+        self.assertEqual(self.profile.user.first_name, "Miri Updated")
+        self.assertEqual(self.profile.user.last_name, "Musterfrau Updated")
+
     def test_get_business_profiles(self):
+        """The business profile list returns only business profiles."""
         customer = User.objects.create_user(
             username="testcustomer",
             password="testpassword",
@@ -185,6 +241,7 @@ class ProfileTests(APITestCase):
         self.assertNotIn(customer.pk, returned_user_ids)
 
     def test_business_profiles_exclude_customers(self):
+        """The business profile list does not contain customer profiles."""
         customer = User.objects.create_user(
             username="testcustomer",
             password="testpassword",
@@ -207,8 +264,8 @@ class ProfileTests(APITestCase):
         self.assertIn(self.user.pk, returned_user_ids)
         self.assertNotIn(customer.pk, returned_user_ids)
 
-
     def test_get_customer_profiles(self):
+        """The customer profile list returns the customer's profile data."""
         customer = User.objects.create_user(
             username="testcustomer",
             password="testpassword",
@@ -238,10 +295,11 @@ class ProfileTests(APITestCase):
         self.assertEqual(profile_data["last_name"], "Test")
         self.assertEqual(profile_data["file"], "profile_picture_customer.jpg")
         self.assertEqual(profile_data["type"], "customer")
-        self.assertEqual(profile_data["uploaded_at"], "2023-09-15T09:00:00+02:00")
-
+        self.assertEqual(profile_data["uploaded_at"],
+                         "2023-09-15T09:00:00+02:00")
 
     def test_customer_profiles_exclude_business_users(self):
+        """The customer profile list does not contain business profiles."""
         url = reverse("profiles-customer")
 
         response = self.client.get(url)
@@ -252,11 +310,19 @@ class ProfileTests(APITestCase):
 
         self.assertNotIn(self.user.pk, returned_user_ids)
 
-
-    def test_get_customer_profiles_unauthenticated(self):
+    def test_get_business_profiles_unauthenticated(self):
+        """Listing business profiles without authentication returns 401."""
         client = APIClient()
 
-        url = reverse("profiles-customer")
-        response = client.get(url)
+        response = client.get(self.business_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_customer_profiles_unauthenticated(self):
+        """Listing customer profiles without authentication returns 401."""
+        client = APIClient()
+
+        customer_url = reverse("profiles-customer")
+        response = client.get(customer_url)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
