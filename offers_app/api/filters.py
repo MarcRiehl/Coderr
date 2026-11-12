@@ -1,52 +1,65 @@
-from django.db.models import Q, Min
-from rest_framework.exceptions import ValidationError
 from decimal import Decimal, InvalidOperation
+
+from django.db.models import Min, Q
+from rest_framework.exceptions import ValidationError
 
 
 class OfferFilter:
-
+    """Filter, search and sort an offer queryset by query parameters."""
     ALLOWED_ORDERING = [
         "updated_at",
         "-updated_at",
         "min_price",
         "-min_price"
     ]
-        
 
     def __init__(self, queryset, params):
+        """Store the queryset and the query parameters.
+
+        Args:
+            queryset (QuerySet): The offers to filter.
+            params (QueryDict): The query parameters of the request.
+        """
         self.queryset = queryset
         self.params = params
 
     def validate_params(self):
+        """Check the query parameters for unknown keys and invalid values.
+
+        Returns:
+            OfferFilter: This filter instance, for method chaining.
+
+        Raises:
+            ValidationError: If a parameter is unknown or has an invalid value.
+        """
         errors = {}
 
         allowed_params = {
-        "creator_id",
-        "min_price",
-        "max_delivery_time",
-        "ordering",
-        "search",
-        "page_size",
-        "page",
-    }
+            "creator_id",
+            "min_price",
+            "max_delivery_time",
+            "ordering",
+            "search",
+            "page_size",
+            "page",
+        }
 
         unknown_params = set(self.params.keys()) - allowed_params
 
         if unknown_params:
             errors["unknown_params"] = (
-            f"Unbekannte Query-Parameter: {', '.join(sorted(unknown_params))}"
-        )
+                f"Unbekannte Query-Parameter: {', '.join(sorted(unknown_params))}"
+            )
 
-        creator_id = self.params.get("creator_id")#Filter nach ID
+        creator_id = self.params.get("creator_id")
         if creator_id not in (None, ""):
             try:
                 if int(creator_id) <= 0:
                     raise ValueError
             except (ValueError, TypeError):
                 errors["creator_id"] = "Muss eine positive Ganzzahl sein."
-                
 
-        min_price = self.params.get("min_price") #Filter min Preis
+        min_price = self.params.get("min_price")
         if min_price not in (None, ""):
             try:
                 price = Decimal(min_price)
@@ -55,7 +68,7 @@ class OfferFilter:
             except (InvalidOperation, ValueError, TypeError):
                 errors["min_price"] = "Muss eine gültige Zahl größer oder gleich 0 sein."
 
-        max_delivery_time = self.params.get("max_delivery_time")# Filter Lieferzeit
+        max_delivery_time = self.params.get("max_delivery_time")
         if max_delivery_time not in (None, ""):
             try:
                 if int(max_delivery_time) < 0:
@@ -74,15 +87,25 @@ class OfferFilter:
 
         return self
 
-    def filter_by_creator(self): #Filter nach ID
+    def filter_by_creator(self):
+        """Keep only offers by the user given in ``creator_id``.
+
+        Returns:
+            OfferFilter: This filter instance, for method chaining.
+        """
         creator_id = self.params.get("creator_id")
 
         if creator_id not in (None, ""):
             self.queryset = self.queryset.filter(user_id=creator_id)
 
         return self
-    
-    def filter_by_min_price(self): #Filter min Preis
+
+    def filter_by_min_price(self):
+        """Keep only offers whose minimum price is at least ``min_price``.
+
+        Returns:
+            OfferFilter: This filter instance, for method chaining.
+        """
         min_price = self.params.get("min_price")
 
         if min_price not in (None, ""):
@@ -90,23 +113,40 @@ class OfferFilter:
 
         return self
 
-    def filter_by_max_delivery_time(self): #Filter Lieferzeit
+    def filter_by_max_delivery_time(self):
+        """Keep only offers deliverable within ``max_delivery_time`` days.
+
+        Returns:
+            OfferFilter: This filter instance, for method chaining.
+        """
         max_delivery_time = self.params.get("max_delivery_time")
 
         if max_delivery_time not in (None, ""):
-            self.queryset = self.queryset.filter(min_delivery_time__lte=max_delivery_time)
+            self.queryset = self.queryset.filter(
+                min_delivery_time__lte=max_delivery_time)
 
         return self
 
-    def search(self): #Suche im Titel und in der Beschreibung
+    def search(self):
+        """Keep only offers whose title or description contains ``search``.
+
+        Returns:
+            OfferFilter: This filter instance, for method chaining.
+        """
         search = self.params.get("search")
 
         if search:
-            self.queryset = self.queryset.filter(Q(title__icontains=search) | Q(description__icontains=search))
+            self.queryset = self.queryset.filter(
+                Q(title__icontains=search) | Q(description__icontains=search))
 
         return self
 
-    def order(self): #Sortiert die Angebote nach den Feldern 'updated_at' oder 'min_price'.
+    def order(self):
+        """Sort offers by ``ordering``, or by newest update if not given.
+
+        Returns:
+            OfferFilter: This filter instance, for method chaining.
+        """
         ordering = self.params.get("ordering")
 
         if ordering:
@@ -117,6 +157,14 @@ class OfferFilter:
         return self
 
     def apply(self):
+        """Validate the parameters and apply all filters, search and sorting.
+
+        Returns:
+            QuerySet: The filtered and sorted offers.
+
+        Raises:
+            ValidationError: If the query parameters are invalid.
+        """
         return (
             self
             .validate_params()
