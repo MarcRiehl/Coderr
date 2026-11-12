@@ -89,17 +89,21 @@ class ProfilesCustomerView(ListAPIView):
     def get_queryset(self):
         return Profile.objects.filter(user__type="customer").select_related("user") #.order_by('username')
 
-class ProfileImageView(View):
+class ProfileOfferImageView(View):
 
     def get(self, request, filename):
-        for root, dirs, files in os.walk(
-            settings.MEDIA_ROOT / "profile_images"
-        ):
-            if filename in files:
-                file_path = os.path.join(root, filename)
+        image_directories = [
+            settings.MEDIA_ROOT / "profile_images",
+            settings.MEDIA_ROOT / "offer_images",
+        ]
 
-                return FileResponse(
-                    open(file_path, "rb")
-                )
+        for directory in image_directories:
+            for root, dirs, files in os.walk(directory):
+                if filename in files:
+                    file_path = os.path.join(root, filename)
 
-        raise Http404("Profile image not found")
+                    return FileResponse(
+                        open(file_path, "rb")
+                    )
+
+        raise Http404("Image not found")

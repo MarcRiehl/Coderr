@@ -9,10 +9,16 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework.authtoken.models import Token
 
 from offers_app.models import Offer, OfferDetail
+from django.core.files.uploadedfile import SimpleUploadedFile
 
+import tempfile
+from django.test import override_settings
 
 User = get_user_model()
 
+@override_settings(
+    MEDIA_ROOT=tempfile.mkdtemp()
+)
 
 
 class OfferTests(APITestCase):
@@ -477,3 +483,28 @@ class OfferTests(APITestCase):
         self.assertEqual(response.data["count"], 2)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertIsNotNone(response.data["next"])
+
+    #Test Bild upload
+
+    def test_patch_offer_image(self):
+        self.client.force_authenticate(user=self.business_user)
+        image = SimpleUploadedFile(
+            name="offer-image.jpg",
+            content=b"fake image content",
+            content_type="image/jpeg"
+        )
+
+        response = self.client.patch(
+            self.offer_url,
+            data={"image": image},
+            format="multipart"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+        self.offer.refresh_from_db()
+
+        self.assertTrue(self.offer.image)# Bild wurde gespeichert
+        self.assertTrue(self.offer.image.name.endswith("offer-image.jpg")) # Dateiname im Model überprüfen
+        self.assertEqual(response.data["image"],"offer-image.jpg") # Response enthält nur den Dateinamen
+        self.assertTrue(self.offer.image.storage.exists(self.offer.image.name)) # Bilddatei existiert
