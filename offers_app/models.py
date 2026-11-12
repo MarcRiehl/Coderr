@@ -1,11 +1,13 @@
 from django.db import models
 from django.conf import settings
 
+def offer_image_upload_path(instance, filename):
+    return f"offer_images/{instance.user.id}/{filename}"
 
 class Offer(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="offers") # muss business besitzen
     title = models.CharField(max_length=255)
-    image = models.CharField(max_length=255, blank=True, null=True) #uploadpfad noch prüfen, null erlauben
+    image = models.FileField(upload_to=offer_image_upload_path, blank=True, null=True) #uploadpfad noch prüfen, null erlauben
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

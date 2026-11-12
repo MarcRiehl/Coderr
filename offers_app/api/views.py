@@ -9,12 +9,14 @@ from ..models import Offer, OfferDetail
 from .serializers import OfferSerializer, OfferListSerializer, OfferRetrieveSerializer, OfferDetailSerializer
 from .filters import OfferFilter
 from .pagination import OfferPagination
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 
 
 class OfferViewSet(ModelViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
     queryset = Offer.objects.all()
     pagination_class = OfferPagination
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_permissions(self):
         if self.action == "list":

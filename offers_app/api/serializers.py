@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import transaction
@@ -6,6 +8,16 @@ from rest_framework import serializers
 from offers_app.models import Offer, OfferDetail
 
 User = get_user_model()
+
+import os
+
+class OfferImageField(serializers.FileField):
+
+    def to_representation(self, value):
+        if not value:
+            return None
+
+        return os.path.basename(value.name)
 
 
 class OfferDetailLinkSerializer(serializers.ModelSerializer):
@@ -33,6 +45,8 @@ class OfferListSerializer(serializers.ModelSerializer):
     details = OfferDetailLinkSerializer(many=True, read_only=True)
 
     user_details = OfferUserSerializer(source="user", read_only=True)
+
+    image = OfferImageField(required=False, allow_null=True)
 
     min_price = serializers.DecimalField(
         max_digits=10,
@@ -123,6 +137,8 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 class OfferSerializer(serializers.ModelSerializer):
 
     details = OfferDetailSerializer(many=True)
+
+    image = OfferImageField(required=False, allow_null=True)
 
     class Meta:
         model = Offer
@@ -220,6 +236,7 @@ class OfferDetailAbsoluteLinkSerializer(serializers.ModelSerializer):
 
 class OfferRetrieveSerializer(serializers.ModelSerializer):
     details = OfferDetailAbsoluteLinkSerializer(many=True, read_only=True)
+    image = OfferImageField(required=False, allow_null=True)
 
     min_price = serializers.DecimalField(
         max_digits=10,
