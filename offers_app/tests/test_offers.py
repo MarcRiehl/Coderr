@@ -569,6 +569,18 @@ class OfferTests(APITestCase):
         self.assertEqual(len(response.data["results"]), 1)
         self.assertIsNotNone(response.data["next"])
 
+    def test_offers_pagination_last_page(self):
+        """page=last returns the last page instead of 400."""
+        self.create_offer(self.business_user, title="Website Design")
+
+        response = self.client.get(
+            self.offers_url, {"page_size": 1, "page": "last"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertIsNone(response.data["next"])
+        self.assertIsNotNone(response.data["previous"])
+
     def test_patch_offer_image(self):
         """An uploaded image keeps its file name and is saved to storage."""
         self.authenticate(self.business_token)

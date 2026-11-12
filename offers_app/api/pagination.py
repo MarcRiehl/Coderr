@@ -20,11 +20,12 @@ class OfferPagination(PageNumberPagination):
             int | str: The requested page number.
 
         Raises:
-            ValidationError: If ``page`` is not a positive integer.
+            ValidationError: If ``page`` is neither a positive integer
+                nor ``last``.
         """
         page_number = request.query_params.get(self.page_query_param, 1)
 
-        if page_number != self.last_page_strings:
+        if page_number not in self.last_page_strings:
             try:
                 if int(page_number) <= 0:
                     raise ValueError

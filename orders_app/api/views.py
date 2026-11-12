@@ -36,9 +36,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         elif self.action == 'partial_update':
             permission_classes = [IsAuthenticated, IsBusinessOrderOwner]
 
-        elif self.action == 'destroy':
-            permission_classes = [IsAuthenticated, IsAdminUser]
-
         else:
             permission_classes = [IsAuthenticated]
 
