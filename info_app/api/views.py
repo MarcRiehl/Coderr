@@ -1,24 +1,36 @@
-from rest_framework.views import APIView
 from django.db.models import Avg, Count
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from reviews_app.models import Review
-from profiles_app.models import Profile
 from offers_app.models import Offer
+from profiles_app.models import Profile
+from reviews_app.models import Review
 
 
 class BaseInfoView(APIView):
-
+    """API view for general platform statistics."""
     permission_classes = [AllowAny]
 
     def get(self, request):
+        """Return general statistics about the platform.
+
+        Args:
+            request (Request): The HTTP request.
+
+        Returns:
+            Response: The number of reviews, the average rating rounded
+                to one decimal (0.0 if there are no reviews), the number
+                of business profiles and the number of offers.
+        """
 
         review_count = Review.objects.count()
 
-        average_rating = Review.objects.aggregate(average=Avg('rating'))['average'] #Durchschnitt direkt in der Datenbank
+        average_rating = Review.objects.aggregate(
+            average=Avg('rating'))['average']
 
-        business_profile_count = Profile.objects.filter(user__type='business').count() #user__type__ aus dem user model
+        business_profile_count = Profile.objects.filter(
+            user__type='business').count()
 
         offer_count = Offer.objects.count()
 
