@@ -277,7 +277,7 @@ class ProfileTests(APITestCase):
         Profile.objects.create(
             user=customer,
             file="profile_picture_customer.jpg",
-            uploaded_at="2023-09-15T09:00:00"
+            uploaded_at="2023-09-15T09:00:00Z"
         )
 
         customer_url = reverse("profiles-customer")
