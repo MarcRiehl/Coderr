@@ -135,7 +135,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'de-de'
 
-TIME_ZONE = 'Europe/Berlin'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -164,6 +164,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%SZ',
 }
-
 AUTH_USER_MODEL = "auth_app.User"

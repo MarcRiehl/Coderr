@@ -296,7 +296,7 @@ class ProfileTests(APITestCase):
         self.assertEqual(profile_data["file"], "profile_picture_customer.jpg")
         self.assertEqual(profile_data["type"], "customer")
         self.assertEqual(profile_data["uploaded_at"],
-                         "2023-09-15T09:00:00+02:00")
+                         "2023-09-15T09:00:00Z")
 
     def test_customer_profiles_exclude_business_users(self):
         """The customer profile list does not contain business profiles."""
